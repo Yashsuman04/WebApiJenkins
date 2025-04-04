@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         AZURE_CREDENTIALS_ID = 'jenkins-pipeline-sp'
-        RESOURCE_GROUP = 'rg-jenkins1234'
+        RESOURCE_GROUP = 'yash'
         APP_SERVICE_NAME = 'webapijenkins847589012'
     }
 
