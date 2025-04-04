@@ -1,64 +1,92 @@
 pipeline {
     agent any
-    
     environment {
-        AZURE_SUBSCRIPTION_ID = '9a2083dd-e5f8-4f25-9b0b-23b06a485ddb'
-        AZURE_TENANT_ID = '1320b4f6-35bd-4e24-8d0e-f08f366c4fd7'
-        AZURE_CLIENT_ID = credentials('AZURE_CLIENT_ID')
-        AZURE_CLIENT_SECRET = credentials('AZURE_CLIENT_SECRET')
+        AZURE_CREDENTIALS_ID = 'jenkins-pipeline-sp'
+        RESOURCE_GROUP = 'webservicerg'
+        APP_SERVICE_NAME = 'yashsumannWebApp01'
+        TF_WORKING_DIR='.'
     }
-    
+
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/master']],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/Yashsuman04/WebApiJenkins.git',
-                        credentialsId: ''
-                    ]]
-                ])
+                git branch: 'master', url: 'https://github.com/Yashsuman04/WebApiJenkins.git'
             }
         }
-        
-        stage('Terraform Init') {
+         stage('Terraform Init') {
             steps {
-                bat '''
-                    terraform init -input=false
-                '''
+                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+                    bat """
+                    az login --service-principal -u %AZURE_CLIENT_ID% -p %AZURE_CLIENT_SECRET% --tenant %AZURE_TENANT_ID%
+                    echo "Checking Terraform Installation..."
+                    terraform -v
+                    echo "Navigating to Terraform Directory: $TF_WORKING_DIR"
+                    cd $TF_WORKING_DIR
+                    echo "Initializing Terraform..."
+                    terraform init
+                    """
+                }
             }
         }
-        
+
         stage('Terraform Plan') {
-            steps {
-                bat '''
-                    terraform plan -out=tfplan -input=false
-                '''
-            }
-        }
-        
-        stage('Terraform Apply') {
-            steps {
-                bat '''
-                    terraform apply -auto-approve -input=false tfplan
-                '''
-            }
+    steps {
+        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+            bat """
+            az login --service-principal -u %AZURE_CLIENT_ID% -p %AZURE_CLIENT_SECRET% --tenant %AZURE_TENANT_ID%
+            echo "Navigating to Terraform Directory: %TF_WORKING_DIR%"
+            cd %TF_WORKING_DIR%
+            terraform plan -out=tfplan
+            """
         }
     }
-    
-    post {
-        always {
-            cleanWs()
+}
+
+
+        stage('Terraform Apply') {
+    steps {
+        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+            bat """
+            az login --service-principal -u %AZURE_CLIENT_ID% -p %AZURE_CLIENT_SECRET% --tenant %AZURE_TENANT_ID%
+            echo "Navigating to Terraform Directory: %TF_WORKING_DIR%"
+            cd %TF_WORKING_DIR%
+            echo "Applying Terraform Plan..."
+            terraform apply -auto-approve tfplan
+            """
         }
+    }
+}
+
+    
+
+        stage('Build') {
+            steps {
+                bat 'dotnet restore'
+                bat 'dotnet build --configuration Release'
+                bat 'dotnet publish -c Release -o ./publish'
+            }
+        }
+
+       stage('Deploy') {
+    steps {
+        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+            bat """
+            az login --service-principal -u %AZURE_CLIENT_ID% -p %AZURE_CLIENT_SECRET% --tenant %AZURE_TENANT_ID%
+            powershell Compress-Archive -Path ./publish/* -DestinationPath ./publish.zip -Force
+            az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path ./publish.zip --type zip
+            """
+        }
+    }
+}
+
+    }
+
+    post {
         success {
-            echo 'Terraform deployment completed successfully!'
+            echo 'Deployment Successful!'
         }
         failure {
-            echo 'Terraform deployment failed!'
-            bat '''
-                terraform destroy -auto-approve
-            '''
+            echo 'Deployment Failed!'
         }
     }
-} 
+}
