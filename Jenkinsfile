@@ -15,7 +15,7 @@ pipeline {
                     $class: 'GitSCM',
                     branches: [[name: '*/master']],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/Yashsuman04/WebApiJenkins',
+                        url: 'https://github.com/Yashsuman04/WebApiJenkins.git',
                         credentialsId: ''
                     ]]
                 ])
