@@ -17,10 +17,8 @@ pipeline {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
                     bat """
-                    echo "Checking Terraform Installation..."
-                    terraform -v
-                    echo "Navigating to Terraform Directory: $TF_WORKING_DIR"
-                    cd $TF_WORKING_DIR
+                    echo "Navigating to Terraform Directory: %TF_WORKING_DIR%"
+                    cd %TF_WORKING_DIR%
                     echo "Initializing Terraform..."
                     terraform init
                     """
