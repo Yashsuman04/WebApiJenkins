@@ -40,7 +40,7 @@ resource "azurerm_app_service" "web_app" {
   }
 
   app_settings = {
-    "WEBSITE_RUN_FROM_PACKAGE" = "0"
+    "WEBSITE_RUN_FROM_PACKAGE" = "1"
   }
 
   https_only = true
