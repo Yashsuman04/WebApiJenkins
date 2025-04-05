@@ -66,9 +66,6 @@ pipeline {
     steps {
         withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
             bat """
-            echo "Hello World" > test.html
-            az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path ./test.html --type file
-            
             powershell Compress-Archive -Path ./publish/* -DestinationPath ./publish.zip -Force
             az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path ./publish.zip --type zip
             """
