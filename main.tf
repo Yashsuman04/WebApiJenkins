@@ -19,24 +19,23 @@ resource "azurerm_resource_group" "web_rg" {
   location = "Central India"
 }
 
-resource "azurerm_service_plan" "Web_plan" {
+resource "azurerm_service_plan" "web_plan" {
   name                = "webPlan01"
   location            = azurerm_resource_group.web_rg.location
   resource_group_name = azurerm_resource_group.web_rg.name
   os_type             = "Windows"
-
-  sku_name = "B1"
-
+  sku_name            = "B1"
 }
-resource "azurerm_app_service" "web_app" {
+
+resource "azurerm_windows_web_app" "web_app" {
   name                = "yashsumannnnnnWebApp0412"
   location            = azurerm_resource_group.web_rg.location
   resource_group_name = azurerm_resource_group.web_rg.name
-  app_service_plan_id = azurerm_service_plan.Web_plan.id
+  service_plan_id     = azurerm_service_plan.web_plan.id
 
   site_config {
-    dotnet_framework_version = "v6.0" # Change to your preferred version
     scm_type                 = "LocalGit"
+    dotnet_framework_version = "v6.0"
   }
 
   app_settings = {
@@ -45,3 +44,4 @@ resource "azurerm_app_service" "web_app" {
 
   https_only = true
 }
+
