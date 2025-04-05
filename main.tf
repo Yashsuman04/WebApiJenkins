@@ -35,8 +35,7 @@ resource "azurerm_app_service" "web_app" {
   app_service_plan_id = azurerm_service_plan.Web_plan.id
 
   site_config {
-    dotnet_framework_version = "v9.0" # Change to your preferred version
-    scm_type                 = "LocalGit"
+    always_on = true
   }
 
   app_settings = {
