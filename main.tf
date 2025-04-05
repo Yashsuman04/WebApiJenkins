@@ -34,8 +34,11 @@ resource "azurerm_windows_web_app" "web_app" {
   service_plan_id     = azurerm_service_plan.web_plan.id
 
   site_config {
-    scm_type                 = "LocalGit"
-    dotnet_framework_version = "v6.0"
+    scm_type = "LocalGit"
+  }
+
+  application_stack {
+    dotnet_version = "6.0"
   }
 
   app_settings = {
@@ -44,4 +47,3 @@ resource "azurerm_windows_web_app" "web_app" {
 
   https_only = true
 }
-
