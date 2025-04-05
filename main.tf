@@ -2,11 +2,11 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">=3.16.0"
+      version = ">=3.0.0"
     }
   }
+  required_version = ">=1.0.0"
 }
-
 
 provider "azurerm" {
   subscription_id = "9a2083dd-e5f8-4f25-9b0b-23b06a485ddb"
@@ -19,26 +19,24 @@ resource "azurerm_resource_group" "web_rg" {
   location = "Central India"
 }
 
-resource "azurerm_service_plan" "web_plan" {
+resource "azurerm_service_plan" "Web_plan" {
   name                = "webPlan01"
   location            = azurerm_resource_group.web_rg.location
   resource_group_name = azurerm_resource_group.web_rg.name
   os_type             = "Windows"
-  sku_name            = "B1"
-}
 
-resource "azurerm_windows_web_app" "web_app" {
+  sku_name = "B1"
+
+}
+resource "azurerm_app_service" "web_app" {
   name                = "yashsumannnnnnWebApp0412"
   location            = azurerm_resource_group.web_rg.location
   resource_group_name = azurerm_resource_group.web_rg.name
-  service_plan_id     = azurerm_service_plan.web_plan.id
+  app_service_plan_id = azurerm_service_plan.Web_plan.id
 
   site_config {
-    scm_type = "LocalGit"
-  }
-
-  application_stack {
-    dotnet_version = "6.0"
+    dotnet_framework_version = "v9.0" # Change to your preferred version
+    scm_type                 = "LocalGit"
   }
 
   app_settings = {
