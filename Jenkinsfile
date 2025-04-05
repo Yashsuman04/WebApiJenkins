@@ -2,9 +2,9 @@ pipeline {
     agent any
     environment {
         AZURE_CREDENTIALS_ID = 'jenkins-pipeline-sp'
-        RESOURCE_GROUP = 'webservicerg'
-        APP_SERVICE_NAME = 'yashsumannWebApp01'
-        TF_WORKING_DIR='.'
+        RESOURCE_GROUP = 'WebServiceRG'
+        APP_SERVICE_NAME = 'yashsumannnnnnWebApp0412'
+        TF_WORKING_DIR = '.'
     }
 
     stages {
@@ -13,15 +13,13 @@ pipeline {
                 git branch: 'master', url: 'https://github.com/Yashsuman04/WebApiJenkins.git'
             }
         }
-         stage('Terraform Init') {
+
+        stage('Terraform Init') {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
                     bat """
-                    echo "Checking Terraform Installation..."
                     terraform -v
-                    echo "Navigating to Terraform Directory: $TF_WORKING_DIR"
-                    cd $TF_WORKING_DIR
-                    echo "Initializing Terraform..."
+                    cd %TF_WORKING_DIR%
                     terraform init
                     """
                 }
@@ -29,32 +27,26 @@ pipeline {
         }
 
         stage('Terraform Plan') {
-    steps {
-        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-            bat """
-            echo "Navigating to Terraform Directory: %TF_WORKING_DIR%"
-            cd %TF_WORKING_DIR%
-            terraform plan -out=tfplan
-            """
+            steps {
+                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+                    bat """
+                    cd %TF_WORKING_DIR%
+                    terraform plan -out=tfplan
+                    """
+                }
+            }
         }
-    }
-}
-
 
         stage('Terraform Apply') {
-    steps {
-        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-            bat """
-            echo "Navigating to Terraform Directory: %TF_WORKING_DIR%"
-            cd %TF_WORKING_DIR%
-            echo "Applying Terraform Plan..."
-            terraform apply -auto-approve tfplan
-            """
+            steps {
+                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+                    bat """
+                    cd %TF_WORKING_DIR%
+                    terraform apply -auto-approve tfplan
+                    """
+                }
+            }
         }
-    }
-}
-
-    
 
         stage('Build') {
             steps {
@@ -64,26 +56,25 @@ pipeline {
             }
         }
 
-       stage('Deploy') {
-    steps {
-        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-            bat """
-            az login --service-principal -u %AZURE_CLIENT_ID% -p %AZURE_CLIENT_SECRET% --tenant %AZURE_TENANT_ID%
-            powershell Compress-Archive -Path ./publish/* -DestinationPath ./publish.zip -Force
-            az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path ./publish.zip --type zip
-            """
+        stage('Deploy') {
+            steps {
+                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+                    bat """
+                    az login --service-principal -u %AZURE_CLIENT_ID% -p %AZURE_CLIENT_SECRET% --tenant %AZURE_TENANT_ID%
+                    powershell Compress-Archive -Path ./publish/* -DestinationPath ./publish.zip -Force
+                    az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path ./publish.zip --type zip
+                    """
+                }
+            }
         }
-    }
-}
-
     }
 
     post {
         success {
-            echo 'Deployment Successful!'
+            echo '✅ Deployment Successful!'
         }
         failure {
-            echo 'Deployment Failed!'
+            echo '❌ Deployment Failed.'
         }
     }
 }
